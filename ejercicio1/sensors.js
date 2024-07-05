@@ -1,4 +1,24 @@
-class Sensor {}
+class Sensor {
+    constructor(id,name,type,value,unit,updated_at){
+        const validtype = ['temperature', 'humidity','pressure'];
+
+        if (!validtype.includes(type)){
+            throw new Error(`Invalid Type ${type}. Valid Type: ${validtype.join(', ')}`)
+        }
+        this.id= id;
+        this.name=name;
+        this.type= type;
+        this.value= value;
+        this.unit= unit;
+        this.updated_at= updated_at;
+    }
+
+    updateValue(newValue){
+        this.value = newValue
+        this.updated_at = new Date().toISOString();
+    }
+
+}
 
 class SensorManager {
     constructor() {
@@ -14,26 +34,49 @@ class SensorManager {
         if (sensor) {
             let newValue;
             switch (sensor.type) {
-                case "temperatura": // Rango de -30 a 50 grados Celsius
+                case "temperature": // Rango de -30 a 50 grados Celsius
                     newValue = (Math.random() * 80 - 30).toFixed(2);
                     break;
-                case "humedad": // Rango de 0 a 100%
+                case "humidity": // Rango de 0 a 100%
                     newValue = (Math.random() * 100).toFixed(2);
                     break;
-                case "presion": // Rango de 960 a 1040 hPa (hectopascales o milibares)
+                case "pressure": // Rango de 960 a 1040 hPa (hectopascales o milibares)
                     newValue = (Math.random() * 80 + 960).toFixed(2);
                     break;
                 default: // Valor por defecto si el tipo es desconocido
                     newValue = (Math.random() * 100).toFixed(2);
             }
-            sensor.updateValue = newValue;
+            sensor.updateValue(newValue);
             this.render();
         } else {
             console.error(`Sensor ID ${id} no encontrado`);
         }
     }
 
-    async loadSensors(url) {}
+    async loadSensors(url) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok){
+                throw new Error(`File error, status: ${response.status}`);
+            }
+            const data = await response.json();
+            data.forEach(sensorData =>{
+                const sensor = new Sensor(
+                    sensorData.id,
+                    sensorData.name,
+                    sensorData.type,
+                    sensorData.value,
+                    sensorData.unit,
+                    sensorData.updated_at
+                );
+                this.addSensor(sensor);
+            });
+            this.render();
+            
+        }catch (error){
+            console.error('Error:',error);
+        }
+    }
 
     render() {
         const container = document.getElementById("sensor-container");
