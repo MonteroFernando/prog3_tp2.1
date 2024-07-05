@@ -6,9 +6,28 @@ class Currency {
 }
 
 class CurrencyConverter {
-    constructor() {}
+    
+    constructor(apiUrl) {
+        this.apiUrl=apiUrl;
+        this.currencies=[]
+    }
 
-    getCurrencies(apiUrl) {}
+    async getCurrencies() {
+        try{
+            const response = await fetch(this.apiUrl + "/currencies");
+            if (!response.ok){
+                throw new Error ('No hay respuesta del servidor');
+            }
+            const data = await response.json();
+            for (const code in data){
+                const currency = new Currency(code, data[code]);
+                this.currencies.push(currency);
+            }
+
+        }catch{
+            console.error('Error en la promesa de datos',error);
+        }
+    }
 
     convertCurrency(amount, fromCurrency, toCurrency) {}
 }
