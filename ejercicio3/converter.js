@@ -20,8 +20,7 @@ class CurrencyConverter {
             }
             const data = await response.json();
             for (const code in data){
-                const currency = new Currency(code, data[code]);
-                this.currencies.push(currency);
+                this.currencies.push({code: code,name:data[code]});
             }
 
         }catch{
@@ -29,7 +28,24 @@ class CurrencyConverter {
         }
     }
 
-    convertCurrency(amount, fromCurrency, toCurrency) {}
+    async convertCurrency(amount, fromCurrency, toCurrency) {
+        if (fromCurrency.code===toCurrency.code){
+            return parseFloat(amount);
+        }else{
+            try{
+                const response = await fetch(`https://www.frankfurter.app/latest?amount=${amount}&from=${fromCurrency.code}&to=${toCurrency.code}`);
+                if (!response.ok){
+                    throw new Error('Error en la conversion', response.statusText);
+                }
+                const data = await response.json();
+                return data['rates'][toCurrency];
+
+            }catch(error){
+                console.error('error en la respuesta del fetch');
+            }
+
+        }
+    }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -54,13 +70,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         const toCurrency = converter.currencies.find(
             (currency) => currency.code === toCurrencySelect.value
         );
-
         const convertedAmount = await converter.convertCurrency(
             amount,
             fromCurrency,
             toCurrency
         );
-
         if (convertedAmount !== null && !isNaN(convertedAmount)) {
             resultDiv.textContent = `${amount} ${
                 fromCurrency.code
