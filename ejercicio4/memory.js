@@ -31,6 +31,20 @@ class Card {
         const cardElement = this.element.querySelector(".card");
         cardElement.classList.remove("flipped");
     }
+
+    toggleFlip(){
+        if (this.isFlipped){
+            this.#unflip() //Llamo al metodo privado
+            this.isFlipped = true;
+        }else{
+            this.#flip()//Llamo al metodo privado
+            this.isFlipped = false;
+        }
+    }
+
+    matches(otherCard){
+        return this.name===otherCard.name;
+    }
 }
 
 class Board {
@@ -56,6 +70,26 @@ class Board {
     #setGridColumns() {
         const columns = this.#calculateColumns();
         this.fixedGridElement.className = `fixed-grid has-${columns}-cols`;
+    }
+    shuffleCards() {
+        for (let i = this.cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+        }
+    }
+
+    flipDownAllCards() {
+        this.cards.forEach(card => {
+            if (card.isFlipped) {
+                card.toggleFlip();//Cambio para no llamar al metodo privado de la clase Card
+            }
+        });
+    }
+
+    reset() {
+        this.shuffleCards();
+        this.flipDownAllCards();
+        this.render();
     }
 
     render() {
@@ -94,13 +128,38 @@ class MemoryGame {
 
     #handleCardClick(card) {
         if (this.flippedCards.length < 2 && !card.isFlipped) {
-            card.toggleFlip();
+            card.toggleFlip();//Cambio para no llamar al metodo privado de la clase Card
             this.flippedCards.push(card);
 
             if (this.flippedCards.length === 2) {
                 setTimeout(() => this.checkForMatch(), this.flipDuration);
             }
         }
+    }
+
+    checkForMatch() {
+        const [card1, card2] = this.flippedCards;
+
+        if (card1.matches(card2)) {
+            this.matchedCards.push(card1, card2);
+            this.flippedCards = [];
+
+            if (this.matchedCards.length === this.board.cards.length) {
+                alert("¡Has ganado el juego!");
+            }
+        } else {
+            setTimeout(() => {
+                card1.toggleFlip();//Cambio para no llamar al metodo privado de la clase Card
+                card2.toggleFlip();//Cambio para no llamar al metodo privado de la clase Card
+                this.flippedCards = [];
+            }, this.flipDuration);
+        }
+    }
+
+    resetGame() {
+        this.board.reset();
+        this.flippedCards = [];
+        this.matchedCards = [];
     }
 }
 
